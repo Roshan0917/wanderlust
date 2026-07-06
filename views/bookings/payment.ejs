@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/payment.css">
+
+    <!-- (Optional Bootstrap for better look) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body style="background:#f4f6f9;">
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height:100vh;">
+
+    <div class="payment-container">
+
+        <!-- TITLE -->
+        <div class="title mb-3">Complete Your Payment 💳</div>
+
+        <!-- BOOKING INFO -->
+        <div class="info mb-3">
+
+            <p><b>🏨 Hotel:</b> <%= booking.listing.title %></p>
+            <p><b>📅 Check-In:</b> <%= booking.checkIn.toDateString() %></p>
+            <p><b>📅 Check-Out:</b> <%= booking.checkOut.toDateString() %></p>
+            <p><b>👥 Guests:</b> <%= booking.guests %></p>
+
+        </div>
+
+        <!-- PRICE -->
+        <div class="price-box mb-3">
+            <div class="price">
+                ₹ <%= booking.totalPrice.toLocaleString("en-IN") %>
+            </div>
+        </div>
+
+        <!-- BUTTON -->
+        <button class="pay-btn w-100" id="payBtn">
+            Pay Now
+        </button>
+
+        <!-- SECURE TEXT -->
+        <div class="secure mt-2">
+            🔒 Secure Payment (Demo Mode)
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+const btn = document.getElementById("payBtn");
+
+btn.onclick = async function () {
+
+    btn.innerText = "Processing...";
+    btn.disabled = true;
+
+    try {
+        // CREATE ORDER (FAKE)
+        await fetch("/create-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                amount: <%= booking.totalPrice %>
+            })
+        });
+
+        // SIMULATE PAYMENT DELAY
+        setTimeout(async () => {
+
+            const verify = await fetch("/fake-pay", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    bookingId: "<%= booking._id %>"
+                })
+            });
+
+            const data = await verify.json();
+
+            if (data.success) {
+                btn.innerText = "Payment Successful 🎉";
+                btn.classList.remove("btn-primary");
+                btn.classList.add("btn-success");
+
+                setTimeout(() => {
+                    window.location.href = "/bookings/mybookings";
+                }, 800);
+            }
+
+        }, 1500);
+
+    } catch (err) {
+        btn.innerText = "Pay Now";
+        btn.disabled = false;
+        alert("Something went wrong");
+    }
+};
+</script>
+
+</body>
+</html>

@@ -6,7 +6,9 @@ const Listing = require("../models/listing");
 const { isLoggedIn } = require("../middleware");
 
 
-// CREATE BOOKING
+// ==========================
+// 1️⃣ CREATE BOOKING
+// ==========================
 router.post("/:id", isLoggedIn, async (req, res) => {
 
     const listing = await Listing.findById(req.params.id);
@@ -14,27 +16,42 @@ router.post("/:id", isLoggedIn, async (req, res) => {
     let checkIn = new Date(req.body.checkIn);
     let checkOut = new Date(req.body.checkOut);
 
-    let nights =
-        (checkOut - checkIn) / (1000 * 60 * 60 * 24);
+    let nights = (checkOut - checkIn) / (1000 * 60 * 60 * 24);
 
     let totalPrice = nights * listing.price;
 
-    await Booking.create({
+    const booking = await Booking.create({
         listing: listing._id,
         user: req.user._id,
         checkIn,
         checkOut,
         guests: req.body.guests,
-        totalPrice
+        totalPrice,
+        paymentStatus: "pending"   // 💳 IMPORTANT
     });
 
-    req.flash("success", "Booking Confirmed!");
+    req.flash("success", "Booking Created! Now complete payment 💳");
 
-    res.redirect("/bookings/mybookings");
+    // 👉 redirect to payment page
+    res.redirect(`/bookings/pay/${booking._id}`);
 });
 
 
-// 👇 ISKE NICHE YE PASTE KARNA HAI
+// ==========================
+// 2️⃣ PAYMENT PAGE ROUTE
+// ==========================
+router.get("/pay/:id", isLoggedIn, async (req, res) => {
+
+    const booking = await Booking.findById(req.params.id)
+        .populate("listing");
+
+    res.render("bookings/payment.ejs", { booking });
+});
+
+
+// ==========================
+// 3️⃣ MY BOOKINGS
+// ==========================
 router.get("/mybookings", isLoggedIn, async (req, res) => {
 
     const bookings = await Booking.find({
@@ -42,9 +59,12 @@ router.get("/mybookings", isLoggedIn, async (req, res) => {
     }).populate("listing");
 
     res.render("bookings/index.ejs", { bookings });
-
 });
 
+
+// ==========================
+// 4️⃣ CANCEL BOOKING
+// ==========================
 router.delete("/:id", isLoggedIn, async (req, res) => {
 
     await Booking.findByIdAndDelete(req.params.id);
@@ -52,7 +72,6 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
     req.flash("success", "Booking cancelled successfully");
 
     res.redirect("/bookings/mybookings");
-
 });
 
 module.exports = router;

@@ -31,6 +31,11 @@ const bookingSchema = new Schema({
 
     totalPrice: Number,
 
+    paymentStatus: {
+    type: String,
+    default: "pending"
+}
+
 }, { timestamps: true });
 
 module.exports = mongoose.model("Booking", bookingSchema);
